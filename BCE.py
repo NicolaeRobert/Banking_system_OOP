@@ -2,21 +2,21 @@ from abc import ABC, abstractmethod
 
 class BCE(ABC):
     @abstractmethod
-    def open_account():
+    def open_account(self):
         pass
 
     @abstractmethod
-    def close_account():
+    def close_account(self):
         pass
 
     @abstractmethod
-    def calculateMinimumCapital():
+    def calculateMinimumCapital(self):
         pass
 
     @abstractmethod
-    def checkSolvency():
+    def checkSolvency(self):
         pass
     
     @abstractmethod
-    def isRegulationCompliant():
+    def isRegulationCompliant(self):
         pass
