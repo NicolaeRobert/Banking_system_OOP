@@ -28,6 +28,8 @@ class comercial_bank(BCE):
                 self.accounts.append(
                     account(account_info[0],account_info[1],account_info[2],account_info[3],account_info[4],account_info[5],account_info[6],self.name)
                 )
+                self.total_balance+=account_info[6]
+                self.deposited_money+=account_info[6]
         
         mycursor.close()
         conn.close()
@@ -43,6 +45,9 @@ class comercial_bank(BCE):
         )
         conn.commit()
 
+        self.total_balance+=balance
+        self.deposited_money+=balance
+
         id=mycursor.lastrowid
 
         mycursor.close()
@@ -57,10 +62,19 @@ class comercial_bank(BCE):
         mycursor=conn.cursor()
 
         mycursor.execute(
+            "SELECT balance FROM accounts WHERE id=%s",
+            (id,)
+        )
+        balance=mycursor.fetchone()
+
+        mycursor.execute(
             "DELETE FROM accounts WHERE id=%s",
             (id,)
         )
         conn.commit()
+
+        self.total_balance-=balance[0]
+        self.deposited_money-=balance[0]
 
         mycursor.close()
         conn.close()
@@ -86,15 +100,23 @@ class comercial_bank(BCE):
 
     def grant_loan(self, account, sum, years):
         if sum<=50000:
+            self.total_balance-=sum
+            self.deposited_money-=sum
+
             account.money_borrowed.append(loan(self.name, sum, datetime.today().date(), years))
         else:
             print("Can't provide such a big loan")
 
     def deposit_money(self, account, sum):
         account.balace+=sum
+        self.total_balance+=sum
+        self.deposited_money+=sum
 
     def take_money(self, account, sum):
         if account.balance>=sum:
+            self.total_balance-=sum
+            self.deposited_money-=sum
+
             account.balance-=sum
         else:
             print("Insuficient fonds")
