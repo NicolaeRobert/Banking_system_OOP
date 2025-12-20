@@ -104,20 +104,46 @@ class investment_bank(BCE):
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()
 
-        mycursor.execute(
-            "INSERT INTO TRADES (user_id,company,quantity, total) VALUES (%s,%s,%s,%s)",
-            (account.id, stock_name, quantity, price_per_stock*quantity)
-        )
+        total=quantity*price_per_stock
 
-        conn.commit()
+        if account.balance<total:
+            print("You don't have enough money.")
+        else:
+            mycursor.execute(
+                "INSERT INTO TRADES (user_id,company,quantity, total) VALUES (%s,%s,%s,%s)",
+                (account.id, stock_name, quantity, price_per_stock*quantity)
+            )
+
+            mycursor.execute(
+                "UPDATE ON ACCOUNTS SET balance=%s WHERE id=%s",
+                (account.balance-total,account.id)
+            )
+
+            conn.commit()
+
+            account.balance-=total
 
         mycursor.close()
         conn.close()
 
-    def sell(self, id):
+    def sell(self, account, id, current_price):#The id of the stock
         
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()
+
+        mycursor.execute(
+            "SELECT quantity FROM TRADES WHERE id=%s",
+            (id,)
+        )
+
+        quantity=mycursor.fetchone()
+
+        account.balace+=quantity[0]*current_price
+
+        mycursor.execute(
+            "UPDATE ON ACCOUNTS SET balance=%s WHERE id=%s",
+            (quantity*current_price,account.id)
+        )
 
         mycursor.execute(
             "DELETE FROM TRADES WHERE id=%s",
@@ -128,3 +154,22 @@ class investment_bank(BCE):
 
         mycursor.close()
         conn.close()
+
+    def show_invesments_and_return_ids(self, account):
+
+        conn=get_connection(self.db_name)
+        mycursor=conn.cursor()
+
+        mycursor.execute(
+            "SELECT * FROM trades WHERE user_id=%s",
+            (account.id,)
+        )
+
+        investments=mycursor.fetchall()
+        list_of_ids=[]
+
+        for investment in investments:
+            list_of_ids.append(investment[0])
+            print(f"ID:{investment[0]}  COMPANY:{investment[2]}  QUANTITY:{investment[3]}  TOTAL:{investment[4]}")
+        
+        return list_of_ids
