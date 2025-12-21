@@ -48,6 +48,8 @@ class investment_bank(BCE):
 
         self.accounts.append(account(id,first_name,last_name,phone_number,email,CNP,balance,self.name))
 
+        return self.accounts[-1]
+
     def close_account(self,id):
         
         conn=get_connection(self.db_name)

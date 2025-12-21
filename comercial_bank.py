@@ -1,7 +1,5 @@
 from BCE import BCE
 from account import account
-from loan import loan
-from datetime import datetime
 from utils import get_connection
 import os
 
@@ -55,33 +53,43 @@ class comercial_bank(BCE):
 
         self.accounts.append(account(id,first_name,last_name,phone_number,email,CNP,balance,self.name))
 
-    def close_account(self,id):
+        return self.accounts[-1]
+
+    def close_account(self,account):
 
         conn=get_connection(self.db_name)
-
         mycursor=conn.cursor()
 
         mycursor.execute(
-            "SELECT balance FROM accounts WHERE id=%s",
-            (id,)
+            "SELECT * FROM loans WHERE user_id=%s"
+            (account.id,)
         )
-        balance=mycursor.fetchone()
+        still_has_loans=mycursor.fetchone()
 
-        mycursor.execute(
-            "DELETE FROM accounts WHERE id=%s",
-            (id,)
-        )
-        conn.commit()
+        if still_has_loans!=None:
+            print("Can't close the account! You still have loans active!")
+        else:
+            mycursor.execute(
+                "SELECT balance FROM accounts WHERE id=%s",
+                (account.id,)
+            )
+            balance=mycursor.fetchone()
 
-        self.total_balance-=balance[0]
-        self.deposited_money-=balance[0]
+            mycursor.execute(
+                "DELETE FROM accounts WHERE id=%s",
+                (account.id,)
+            )
+            conn.commit()
 
-        mycursor.close()
-        conn.close()
+            self.total_balance-=balance[0]
+            self.deposited_money-=balance[0]
 
-        for index in range(self.accounts):
-            if self.accounts[index].id==id:
-                self.accounts.pop(index)
+            mycursor.close()
+            conn.close()
+
+            for index in range(self.accounts):
+                if self.accounts[index].id==account.id:
+                    self.accounts.pop(index)
 
     def calculateMinimumCapital(self):
         if self.total_balance==100000:
@@ -98,12 +106,29 @@ class comercial_bank(BCE):
             return True
         return False
 
-    def grant_loan(self, account, sum, years):
+    def grant_loan(self, account, sum):
         if sum<=50000:
-            self.total_balance-=sum
-            self.deposited_money-=sum
 
-            account.money_borrowed.append(loan(self.name, sum, datetime.today().date(), years))
+            conn=get_connection(self.db_name)
+            mycursor=conn.cursor()
+
+            mycursor.execute(
+                "INSERT INTO loans (user_id,sum) VALUES (%s,%s)"
+                (account.id,sum)
+            )
+
+            account.balance+=sum
+
+            mycursor.execute(
+                "UPDATE ON ACCOUNTS SET BALANCE=%s WHERE id=%s",
+                (account.balance,account.id)
+            )
+            
+            conn.commit()
+
+            mycursor.close()
+            conn.close()
+            
         else:
             print("Can't provide such a big loan")
 
@@ -112,11 +137,38 @@ class comercial_bank(BCE):
         self.total_balance+=sum
         self.deposited_money+=sum
 
+        conn=get_connection(self.db_name)
+        mycursor=conn.cursor()
+
+        mycursor.execute(
+            "UPDATE ON ACCOUNTS SET BALANCE=%s WHERE id=%s",
+            (account.balance,account.id)
+        )
+        
+        conn.commit()
+
+        mycursor.close()
+        conn.close()
+
     def take_money(self, account, sum):
         if account.balance>=sum:
             self.total_balance-=sum
             self.deposited_money-=sum
 
             account.balance-=sum
+
+            conn=get_connection(self.db_name)
+            mycursor=conn.cursor()
+
+            mycursor.execute(
+                "UPDATE ON ACCOUNTS SET BALANCE=%s WHERE id=%s",
+                (account.balance,account.id)
+            )
+            
+            conn.commit()
+
+            mycursor.close()
+            conn.close()
+
         else:
             print("Insuficient fonds")

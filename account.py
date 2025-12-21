@@ -6,6 +6,8 @@ class account:
         self.phone_number=phone_number
         self.email=email
         self.CNP=CNP
-        self.money_borrowed=[]
         self.balance=balance
         self.bank_name=bank_name
+
+    def describe_account(self):
+        print(f"ID:{self.id}  BALANCE:{self.balance}  BANK NAME:{self.bank_name}")
