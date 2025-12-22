@@ -8,8 +8,5 @@ class client:
         self.accounts=[]
 
     def show_accounts(self):
-        if len(self.accounts)==0:
-            print("You don't have any account.")
-        else:
-            for account in self.accounts:
-                account.describe_account()
+        for account in self.accounts:
+            account.describe_account()

@@ -50,14 +50,14 @@ class investment_bank(BCE):
 
         return self.accounts[-1]
 
-    def close_account(self,id):
+    def close_account(self,account):
         
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()
 
         mycursor.execute(
             "SELECT * FROM TRADES WHERE user_id=%s",
-            (id,)
+            (account.id,)
         )
 
         result=mycursor.fetchall()
@@ -67,13 +67,13 @@ class investment_bank(BCE):
         else:
             mycursor.execute(
                 "DELETE FROM ACCOUNTS WHERE id=%s",
-                (id,)
+                (account.id,)
             )
 
             conn.commit()
 
             for index in range(len(self.accounts)):
-                if self.accounts[index].id==id:
+                if self.accounts[index].id==account.id:
                     self.accounts.pop(index)
                     break
             
@@ -94,12 +94,6 @@ class investment_bank(BCE):
         if self.calculateMinimumCapital() and self.checkSolvency():
             return True
         return False
-
-    def show_invesments_oportunities(self, stock_name):
-        url=f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={stock_name}&apikey={os.getenv('api_key')}"
-        response=requests.get(url).json()
-
-        return response['Global Quote']['05. price']
 
     def invest(self, account, quantity, price_per_stock, stock_name):
 
@@ -157,7 +151,7 @@ class investment_bank(BCE):
         mycursor.close()
         conn.close()
 
-    def show_invesments_and_return_ids(self, account):
+    def show_invesments_and_return_ids_and_company(self, account):
 
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()
@@ -170,8 +164,34 @@ class investment_bank(BCE):
         investments=mycursor.fetchall()
         list_of_ids=[]
 
+        if investments!=None:
+            print("The stock that you own:")
+
+        number=1
         for investment in investments:
-            list_of_ids.append(investment[0])
-            print(f"ID:{investment[0]}  COMPANY:{investment[2]}  QUANTITY:{investment[3]}  TOTAL:{investment[4]}")
+            list_of_ids.append([investment[0],investment[2]])
+            print(str(number)+'. '+f"ID:{investment[0]}  COMPANY:{investment[2]}  QUANTITY:{investment[3]}  TOTAL:{investment[4]}")
+            number+=1
         
         return list_of_ids
+    
+    def return_accounts(self,CNP):
+        accounts_to_return=[]
+
+        for account in self.accounts:
+            if account.CNP==CNP:
+                accounts_to_return.append(account)
+        
+        if len(accounts_to_return)==0:
+            return None
+        return accounts_to_return
+    
+    def describe_bank(self):
+        print(f"The bank {self.name} is an investment bank.")
+
+    @classmethod
+    def show_investments_oportunities(cls,stock_name):
+        url=f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={stock_name}&apikey={os.getenv('api_key')}"
+        response=requests.get(url).json()
+
+        return float(response['Global Quote']['05. price'])

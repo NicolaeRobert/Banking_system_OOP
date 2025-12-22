@@ -172,3 +172,17 @@ class comercial_bank(BCE):
 
         else:
             print("Insuficient fonds")
+    
+    def return_accounts(self,CNP):
+        accounts_to_return=[]
+
+        for account in self.accounts:
+            if account.CNP==CNP:
+                accounts_to_return.append(account)
+        
+        if len(accounts_to_return)==0:
+            return None
+        return accounts_to_return
+    
+    def describe_bank(self):
+        print(f"The bank {self.name} is a comercial bank.")
