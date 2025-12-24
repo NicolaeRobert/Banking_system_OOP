@@ -1,6 +1,7 @@
 from BCE import BCE
 from account import account
 from utils import get_connection
+from decimal import Decimal
 import requests
 import os
 
@@ -36,7 +37,7 @@ class investment_bank(BCE):
         mycursor=conn.cursor()
 
         mycursor.execute(
-            "INSER INTO accounts (first_name,last_name,phone_number,email,CNP,balance) VALUES (%s,%s,%s,%s,%s,%s)",
+            "INSERT INTO accounts (first_name,last_name,phone_number,email,CNP,balance) VALUES (%s,%s,%s,%s,%s,%s)",
             (first_name,last_name,phone_number,email,CNP,balance)
         )
         conn.commit()
@@ -62,7 +63,7 @@ class investment_bank(BCE):
 
         result=mycursor.fetchall()
 
-        if result!=None:
+        if result:
             print("We can't close your account. Sell the rest of the stock in order to be able to close the account!")
         else:
             mycursor.execute(
@@ -72,10 +73,7 @@ class investment_bank(BCE):
 
             conn.commit()
 
-            for index in range(len(self.accounts)):
-                if self.accounts[index].id==account.id:
-                    self.accounts.pop(index)
-                    break
+            self.accounts=[acc for acc in self.accounts if acc.id != account.id]
             
         mycursor.close()
         conn.close()
@@ -111,13 +109,13 @@ class investment_bank(BCE):
             )
 
             mycursor.execute(
-                "UPDATE ON ACCOUNTS SET balance=%s WHERE id=%s",
-                (account.balance-total,account.id)
+                "UPDATE ACCOUNTS SET balance=%s WHERE id=%s",
+                (account.balance-Decimal(str(total)),account.id)
             )
 
             conn.commit()
 
-            account.balance-=total
+            account.balance-=Decimal(str(total))
 
         mycursor.close()
         conn.close()
@@ -133,12 +131,12 @@ class investment_bank(BCE):
         )
 
         quantity=mycursor.fetchone()
-
-        account.balace+=quantity[0]*current_price
+        total=Decimal(str(quantity[0]*current_price))
+        account.balance+=total
 
         mycursor.execute(
-            "UPDATE ON ACCOUNTS SET balance=%s WHERE id=%s",
-            (quantity*current_price,account.id)
+            "UPDATE ACCOUNTS SET balance=%s WHERE id=%s",
+            (account.balance,account.id)
         )
 
         mycursor.execute(
@@ -151,7 +149,7 @@ class investment_bank(BCE):
         mycursor.close()
         conn.close()
 
-    def show_invesments_and_return_ids_and_company(self, account):
+    def show_investments_and_return_ids_and_company(self, account):
 
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()

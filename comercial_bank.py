@@ -2,12 +2,13 @@ from BCE import BCE
 from account import account
 from utils import get_connection
 import os
+from decimal import Decimal
 
 class comercial_bank(BCE):
     def __init__(self,name,db_name):
         self.name=name
         self.db_name=db_name
-        self.total_balance=1000000
+        self.total_balance=Decimal("1000000")
         self.deposited_money=0
         self.accounts=[]
 
@@ -38,13 +39,13 @@ class comercial_bank(BCE):
         mycursor=conn.cursor()
 
         mycursor.execute(
-            "INSER INTO accounts (first_name,last_name,phone_number,email,CNP,balance) VALUES (%s,%s,%s,%s,%s,%s)",
+            "INSERT INTO accounts (first_name,last_name,phone_number,email,CNP,balance) VALUES (%s,%s,%s,%s,%s,%s)",
             (first_name,last_name,phone_number,email,CNP,balance)
         )
         conn.commit()
 
-        self.total_balance+=balance
-        self.deposited_money+=balance
+        self.total_balance+=Decimal(str(balance))
+        self.deposited_money+=Decimal(str(balance))
 
         id=mycursor.lastrowid
 
@@ -61,7 +62,7 @@ class comercial_bank(BCE):
         mycursor=conn.cursor()
 
         mycursor.execute(
-            "SELECT * FROM loans WHERE user_id=%s"
+            "SELECT * FROM loans WHERE user_id=%s",
             (account.id,)
         )
         still_has_loans=mycursor.fetchone()
@@ -87,12 +88,10 @@ class comercial_bank(BCE):
             mycursor.close()
             conn.close()
 
-            for index in range(self.accounts):
-                if self.accounts[index].id==account.id:
-                    self.accounts.pop(index)
+            self.accounts=[acc for acc in self.accounts if acc.id != account.id]
 
     def calculateMinimumCapital(self):
-        if self.total_balance==100000:
+        if self.total_balance>=100000:
             return True
         return False
 
@@ -113,14 +112,14 @@ class comercial_bank(BCE):
             mycursor=conn.cursor()
 
             mycursor.execute(
-                "INSERT INTO loans (user_id,sum) VALUES (%s,%s)"
+                "INSERT INTO loans (user_id,sum) VALUES (%s,%s)",
                 (account.id,sum)
             )
 
-            account.balance+=sum
+            account.balance+=Decimal(str(sum))
 
             mycursor.execute(
-                "UPDATE ON ACCOUNTS SET BALANCE=%s WHERE id=%s",
+                "UPDATE ACCOUNTS SET BALANCE=%s WHERE id=%s",
                 (account.balance,account.id)
             )
             
@@ -133,15 +132,15 @@ class comercial_bank(BCE):
             print("Can't provide such a big loan")
 
     def deposit_money(self, account, sum):
-        account.balace+=sum
-        self.total_balance+=sum
-        self.deposited_money+=sum
+        account.balance+=Decimal(str(sum))
+        self.total_balance+=Decimal(str(sum))
+        self.deposited_money+=Decimal(str(sum))
 
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()
 
         mycursor.execute(
-            "UPDATE ON ACCOUNTS SET BALANCE=%s WHERE id=%s",
+            "UPDATE ACCOUNTS SET BALANCE=%s WHERE id=%s",
             (account.balance,account.id)
         )
         
@@ -152,16 +151,16 @@ class comercial_bank(BCE):
 
     def take_money(self, account, sum):
         if account.balance>=sum:
-            self.total_balance-=sum
-            self.deposited_money-=sum
+            self.total_balance-=Decimal(str(sum))
+            self.deposited_money-=Decimal(str(sum))
 
-            account.balance-=sum
+            account.balance-=Decimal(str(sum))
 
             conn=get_connection(self.db_name)
             mycursor=conn.cursor()
 
             mycursor.execute(
-                "UPDATE ON ACCOUNTS SET BALANCE=%s WHERE id=%s",
+                "UPDATE ACCOUNTS SET BALANCE=%s WHERE id=%s",
                 (account.balance,account.id)
             )
             

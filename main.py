@@ -1,7 +1,3 @@
-from dotenv import load_dotenv
-
-load_dotenv()
-
 from comercial_bank import comercial_bank
 from investment_bank import investment_bank
 from client import client
@@ -34,11 +30,12 @@ class App:
             self.banks.append(comercial_bank(key,value))
 
         for key,value in App.investment_banks_db.items():
-            self.banks.append(comercial_bank(key,value))
+            self.banks.append(investment_bank(key,value))
 
         for bank in self.banks:
-            accounts=bank.return_accounts()
-            self.client.accounts+=accounts
+            accounts=bank.return_accounts(self.client.CNP)
+            if accounts!=None:
+                self.client.accounts+=accounts
     
     def show_all_banks(self):
         for bank in self.banks:
@@ -55,7 +52,8 @@ class App:
                 bank.describe_bank()
 
     def open_account(self,index,balance):
-        self.banks[index].open_account(self.client.first_name,self.client.last_name,self.client.phone_number,self.client.email,self.client.CNP,balance)
+        new_account=self.banks[index].open_account(self.client.first_name,self.client.last_name,self.client.phone_number,self.client.email,self.client.CNP,balance)
+        self.client.accounts.append(new_account)
 
     def close_account(self,index,account):
         self.banks[index].close_account(account)
@@ -156,7 +154,7 @@ class App:
 
                     balance=float(input("Your balance is:"))
                     
-                    self.open_account(self.banks[comercial_banks_index[index-1]],balance)
+                    self.open_account(comercial_banks_index[index-1],balance)
                 else:
                     investment_banks_index=[]
                     for i in range(len(self.banks)):
@@ -174,37 +172,38 @@ class App:
 
                     balance=float(input("Your balance is:"))
                     
-                    self.open_account(self.banks[comercial_banks_index[index-1]],balance)
+                    self.open_account(investment_banks_index[index-1],balance)
             elif number==5:
                 if len(self.client.accounts)==0:
                     print("You don't have any account.")
                 else:
                     self.client.show_accounts()
 
-                    index=int(input(f"Choose a number from 1 to {len(self.client.accounts)}"))
+                    print(f"Choose a number from 1 to {len(self.client.accounts)} that reprezents your account.")
+                    index=int(input("Your number: "))
 
                     while index<1 or index>len(self.client.accounts):
                         print(f"The number choosen doesn't convine to the rules. It has to be a number from 1 to {len(self.client.accounts)}")
-                        index=int(input(f"Choose a number from 1 to {len(self.client.accounts)}"))
+                        index=int(input("Your number: "))
                     
                     if self.client.accounts[index-1].bank_name=='Banca Transilvania':
-                        self.banks[0].close_account(self.client.accounts[index-1])
+                        self.close_account(0,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='ING':
-                        self.banks[1].close_account(self.client.accounts[index-1])
+                        self.close_account(1,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='BCR':
-                        self.banks[2].close_account(self.client.accounts[index-1])
+                        self.close_account(2,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='Investment Center':
-                        self.banks[3].close_account(self.client.accounts[index-1])
+                        self.close_account(3,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='Neo Invest':
-                        self.banks[4].close_account(self.client.accounts[index-1])
+                        self.close_account(4,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='Investment Group':
-                        self.banks[5].close_account(self.client.accounts[index-1])
+                        self.close_account(5,self.client.accounts[index-1])
 
                     self.client.accounts.pop(index-1)
             elif number==6:
                 self.show_all_banks()
 
-                print('\n', "Choose a number between 1 and 6 that reprezents the bank choosen.")
+                print('\n',"Choose a number between 1 and 6 that reprezents the bank choosen.")
 
                 index=int(input("Your number is: "))
 
@@ -212,7 +211,10 @@ class App:
                     print("Your number has to be between 1 and 6")
                     index=int(input("Your number is: "))
                 
-                self.banks[index-1].calculateMinimumCapital()
+                if self.banks[index-1].calculateMinimumCapital()==True:
+                    print("The bank has the minimum capital.")
+                else:
+                    print("The bank doesn't have the minimum capital.")
             elif number==7:
                 self.show_all_banks()
 
@@ -224,7 +226,10 @@ class App:
                     print("Your number has to be between 1 and 6")
                     index=int(input("Your number is: "))
                 
-                self.banks[index-1].checkSolvency()
+                if self.banks[index-1].checkSolvency():
+                    print("The bank is solvent.")
+                else:
+                    print("The bank is not solvent.")
             elif number==8:
                 self.show_all_banks()
 
@@ -236,7 +241,10 @@ class App:
                     print("Your number has to be between 1 and 6")
                     index=int(input("Your number is: "))
                 
-                self.banks[index-1].isRegulationCompliant()
+                if self.banks[index-1].isRegulationCompliant():
+                    print("The bank is regulation compliant and can legally work.")
+                else:
+                    print("The bank is not regulation compliant, so choose carefully if you trust it.")
             elif number==9:
                 account_index=[]
                 for i in range(len(self.client.accounts)):
@@ -258,11 +266,11 @@ class App:
                     sum=float(input("The sum of money that you want to borrow is: "))
 
                     if self.client.accounts[account_index[index-1]].bank_name=='Banca Transilvania':
-                        self.banks[0].grant_loan(self.client.accounts[account_index[index-1]],sum)
+                        self.get_loan(self.banks[0],self.client.accounts[account_index[index-1]],sum)
                     elif self.client.accounts[account_index[index-1]].bank_name=='ING':
-                        self.banks[1].grant_loan(self.client.accounts[account_index[index-1]],sum)
+                        self.get_loan(self.banks[1],self.client.accounts[account_index[index-1]],sum)
                     elif self.client.accounts[account_index[index-1]].bank_name=='BCR':
-                        self.banks[2].grant_loan(self.client.accounts[account_index[index-1]],sum)
+                        self.get_loan(self.banks[2],self.client.accounts[account_index[index-1]],sum)
             elif number==10:
                 account_index=[]
                 for i in range(len(self.client.accounts)):
@@ -284,11 +292,11 @@ class App:
                     sum=float(input("The sum of money that you want to deposit is: "))
 
                     if self.client.accounts[account_index[index-1]].bank_name=='Banca Transilvania':
-                        self.banks[0].deposit_money(self.client.accounts[account_index[index-1]],sum)
+                        self.deposit_money(self.banks[0],self.client.accounts[account_index[index-1]],sum)
                     elif self.client.accounts[account_index[index-1]].bank_name=='ING':
-                        self.banks[1].deposit_money(self.client.accounts[account_index[index-1]],sum)
+                        self.deposit_money(self.banks[1],self.client.accounts[account_index[index-1]],sum)
                     elif self.client.accounts[account_index[index-1]].bank_name=='BCR':
-                        self.banks[2].deposit_money(self.client.accounts[account_index[index-1]],sum)
+                        self.deposit_money(self.banks[2],self.client.accounts[account_index[index-1]],sum)
             elif number==11:
                 account_index=[]
                 for i in range(len(self.client.accounts)):
@@ -310,11 +318,11 @@ class App:
                     sum=float(input("The sum of money that you want to take out: "))
 
                     if self.client.accounts[account_index[index-1]].bank_name=='Banca Transilvania':
-                        self.banks[0].take_money(self.client.accounts[account_index[index-1]],sum)
+                        self.take_money(self.banks[0],self.client.accounts[account_index[index-1]],sum)
                     elif self.client.accounts[account_index[index-1]].bank_name=='ING':
-                        self.banks[1].take_money(self.client.accounts[account_index[index-1]],sum)
+                        self.take_money(self.banks[1],self.client.accounts[account_index[index-1]],sum)
                     elif self.client.accounts[account_index[index-1]].bank_name=='BCR':
-                        self.banks[2].take_money(self.client.accounts[account_index[index-1]],sum)
+                        self.take_money(self.banks[2],self.client.accounts[account_index[index-1]],sum)
             elif number==12:
                 stock_map = {
                     "Apple": "AAPL",
@@ -353,7 +361,7 @@ class App:
                         self.client.accounts[i].describe_account()
 
                 if len(account_index)==0:
-                    print("You don't have any account to a comercial bank.")
+                    print("You don't have any account to an investment bank.")
                 else:
                     print(f"Choose a number from 1 to {len(account_index)} that represents the account to choose for buying stock.")
 
@@ -392,14 +400,14 @@ class App:
                     print("Choose the quantity")
                     quantity=int(input("Guantity: "))
 
-                    price=investment_bank.show_invesments_oportunities(stock_map[stock_name])
+                    price=investment_bank.show_investments_oportunities(stock_map[stock_name])
 
                     if self.client.accounts[account_index[index-1]].bank_name=='Investment Center':
-                        self.banks[3].invest(self.client.accounts[account_index[index-1]],quantity,price,stock_name)
+                        self.invest(self.banks[3],self.client.accounts[account_index[index-1]],quantity,price,stock_name)
                     elif self.client.accounts[account_index[index-1]].bank_name=='Neo Invest':
-                        self.banks[4].invest(self.client.accounts[account_index[index-1]],quantity,price,stock_name)
+                        self.invest(self.banks[4],self.client.accounts[account_index[index-1]],quantity,price,stock_name)
                     elif self.client.accounts[account_index[index-1]].bank_name=='Investment Group':
-                        self.banks[5].invest(self.client.accounts[account_index[index-1]],quantity,price,stock_name)
+                        self.invest(self.banks[5],self.client.accounts[account_index[index-1]],quantity,price,stock_name)
             elif number==14:
                 account_index=[]
                 for i in range(len(self.client.accounts)):
@@ -408,7 +416,7 @@ class App:
                         self.client.accounts[i].describe_account()
 
                 if len(account_index)==0:
-                    print("You don't have any account to a comercial bank.")
+                    print("You don't have any account to an investment bank.")
                 else:
                     print(f"Choose a number from 1 to {len(account_index)} that represents the account to choose for buying stock.")
 
@@ -433,11 +441,11 @@ class App:
 
                     ids_and_company_name=None
                     if self.client.accounts[account_index[index-1]].bank_name=='Investment Center':
-                        ids_and_company_name=self.banks[3].show_investments_and_return_ids_and_company(self.client.accounts[index-1])
+                        ids_and_company_name=self.banks[3].show_investments_and_return_ids_and_company(self.client.accounts[account_index[index-1]])
                     elif self.client.accounts[account_index[index-1]].bank_name=='Neo Invest':
-                        ids_and_company_name=self.banks[4].show_investments_and_return_ids_and_company(self.client.accounts[index-1])
+                        ids_and_company_name=self.banks[4].show_investments_and_return_ids_and_company(self.client.accounts[account_index[index-1]])
                     elif self.client.accounts[account_index[index-1]].bank_name=='Investment Group':
-                        ids_and_company_name=self.banks[5].show_investments_and_return_ids_and_company(self.client.accounts[index-1])
+                        ids_and_company_name=self.banks[5].show_investments_and_return_ids_and_company(self.client.accounts[account_index[index-1]])
                     
                     if len(ids_and_company_name)==0:
                         print("You don't have any stock on this account.")
@@ -449,11 +457,11 @@ class App:
                             print(f"The number has to be between 1 and {len(ids_and_company_name)}")
                             id_number=int(input("Your number is: "))
                         
-                        current_price=investment_bank.show_invesments_oportunities(stock_map[ids_and_company_name[id_number-1][1]])
+                        current_price=investment_bank.show_investments_oportunities(stock_map[ids_and_company_name[id_number-1][1]])
 
                         if self.client.accounts[account_index[index-1]].bank_name=='Investment Center':
-                            self.banks[3].sell(self.client.accounts[index-1],ids_and_company_name[id_number-1],current_price)
+                            self.sell(self.banks[3],self.client.accounts[account_index[index-1]],ids_and_company_name[id_number-1][0],current_price)
                         elif self.client.accounts[account_index[index-1]].bank_name=='Neo Invest':
-                            self.banks[4].sell(self.client.accounts[index-1],ids_and_company_name[id_number-1],current_price)
+                            self.sell(self.banks[4],self.client.accounts[account_index[index-1]],ids_and_company_name[id_number-1][0],current_price)
                         elif self.client.accounts[account_index[index-1]].bank_name=='Investment Group':
-                            self.banks[5].sell(self.client.accounts[index-1],ids_and_company_name[id_number-1],current_price)
+                            self.sell(self.banks[5],self.client.accounts[account_index[index-1]],ids_and_company_name[id_number-1][0],current_price)
