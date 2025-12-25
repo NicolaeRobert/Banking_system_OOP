@@ -1,6 +1,6 @@
-from comercial_bank import comercial_bank
-from investment_bank import investment_bank
-from client import client
+from .comercial_bank import comercial_bank
+from .investment_bank import investment_bank
+from .client import client
 
 class App:
 
@@ -56,7 +56,7 @@ class App:
         self.client.accounts.append(new_account)
 
     def close_account(self,index,account):
-        self.banks[index].close_account(account)
+        return self.banks[index].close_account(account)
 
     def calculateMinimumCapitalOfBank(self,bank):
         if bank.calculateMinimumCapital()==True:
@@ -100,7 +100,7 @@ class App:
         print("Now that you have completed we can start:")
         print()
         number=0
-        while number!=15:
+        while number!=16:
             print("1. Show all the banks.")
             print("2. Show comercial banks.")
             print("3. Show investment banks.")
@@ -115,11 +115,12 @@ class App:
             print("12. Choose a company and see it's stock price.")
             print("13. Invest in a stock.")
             print("14. Sell a stock.")
-            print("15. Stop the app.")
+            print("15. Show your accounts.")
+            print("16. Stop the app.")
 
             number=int(input("Your number is: "))
 
-            while number<1 or number>15:
+            while number<1 or number>16:
                 print("The number has to be between 1 and 15. Introduce another number.")
                 number=int(input("Your number is: "))
 
@@ -187,19 +188,20 @@ class App:
                         index=int(input("Your number: "))
                     
                     if self.client.accounts[index-1].bank_name=='Banca Transilvania':
-                        self.close_account(0,self.client.accounts[index-1])
+                        can_be_closed=self.close_account(0,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='ING':
-                        self.close_account(1,self.client.accounts[index-1])
+                        can_be_closed=self.close_account(1,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='BCR':
-                        self.close_account(2,self.client.accounts[index-1])
+                        can_be_closed=self.close_account(2,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='Investment Center':
-                        self.close_account(3,self.client.accounts[index-1])
+                        can_be_closed=self.close_account(3,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='Neo Invest':
-                        self.close_account(4,self.client.accounts[index-1])
+                        can_be_closed=self.close_account(4,self.client.accounts[index-1])
                     elif self.client.accounts[index-1].bank_name=='Investment Group':
-                        self.close_account(5,self.client.accounts[index-1])
+                        can_be_closed=self.close_account(5,self.client.accounts[index-1])
 
-                    self.client.accounts.pop(index-1)
+                    if can_be_closed==True:
+                        self.client.accounts.pop(index-1)
             elif number==6:
                 self.show_all_banks()
 
@@ -465,3 +467,6 @@ class App:
                             self.sell(self.banks[4],self.client.accounts[account_index[index-1]],ids_and_company_name[id_number-1][0],current_price)
                         elif self.client.accounts[account_index[index-1]].bank_name=='Investment Group':
                             self.sell(self.banks[5],self.client.accounts[account_index[index-1]],ids_and_company_name[id_number-1][0],current_price)
+
+            elif number==15:
+                self.client.show_accounts()

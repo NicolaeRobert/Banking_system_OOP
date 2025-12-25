@@ -1,6 +1,6 @@
-from BCE import BCE
-from account import account
-from utils import get_connection
+from .BCE import BCE
+from .account import account
+from .utils import get_connection
 from decimal import Decimal
 import requests
 import os
@@ -52,6 +52,8 @@ class investment_bank(BCE):
         return self.accounts[-1]
 
     def close_account(self,account):
+
+        can_be_closed=True
         
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()
@@ -65,6 +67,7 @@ class investment_bank(BCE):
 
         if result:
             print("We can't close your account. Sell the rest of the stock in order to be able to close the account!")
+            can_be_closed=False
         else:
             mycursor.execute(
                 "DELETE FROM ACCOUNTS WHERE id=%s",
@@ -77,6 +80,8 @@ class investment_bank(BCE):
             
         mycursor.close()
         conn.close()
+
+        return can_be_closed
 
     def calculateMinimumCapital(self):
         if self.bank_capital>=50000:

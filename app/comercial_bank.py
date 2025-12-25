@@ -1,6 +1,6 @@
-from BCE import BCE
-from account import account
-from utils import get_connection
+from .BCE import BCE
+from .account import account
+from .utils import get_connection
 import os
 from decimal import Decimal
 
@@ -58,6 +58,8 @@ class comercial_bank(BCE):
 
     def close_account(self,account):
 
+        can_be_closed=True
+
         conn=get_connection(self.db_name)
         mycursor=conn.cursor()
 
@@ -69,6 +71,7 @@ class comercial_bank(BCE):
 
         if still_has_loans!=None:
             print("Can't close the account! You still have loans active!")
+            can_be_closed=False
         else:
             mycursor.execute(
                 "SELECT balance FROM accounts WHERE id=%s",
@@ -85,10 +88,12 @@ class comercial_bank(BCE):
             self.total_balance-=balance[0]
             self.deposited_money-=balance[0]
 
-            mycursor.close()
-            conn.close()
-
             self.accounts=[acc for acc in self.accounts if acc.id != account.id]
+        
+        mycursor.close()
+        conn.close()
+
+        return can_be_closed
 
     def calculateMinimumCapital(self):
         if self.total_balance>=100000:
